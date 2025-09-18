@@ -1,0 +1,33 @@
+{
+  "name": "certificate-generator",
+  "version": "1.0.0",
+  "description": "Bulk certificate generator with Excel upload and email sending",
+  "main": "server/index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "nodemon server/index.js",
+    "client": "cd client && npm start",
+    "build": "cd client && npm run build && npm run build:server",
+    "build:server": "echo 'Server build complete'",
+    "start": "node server/index.js",
+    "install-all": "npm install && cd client && npm install",
+    "vercel-build": "npm install && cd client && npm install && npm run build"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "multer": "^1.4.5-lts.1",
+    "xlsx": "^0.18.5",
+    "canvas": "^2.11.2",
+    "nodemailer": "^6.9.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1",
+    "concurrently": "^8.2.2"
+  },
+  "keywords": ["certificate", "generator", "bulk", "email", "excel"],
+  "author": "",
+  "license": "MIT"
+}
