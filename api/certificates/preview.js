@@ -51,10 +51,23 @@ export default async function handler(req, res) {
     console.error('Error generating preview certificate:', error);
     console.error('Error stack:', error.stack);
     
+    // If Puppeteer fails, try to return a simple HTML preview
+    if (error.message.includes('Failed to launch the browser process') || 
+        error.message.includes('libnss3.so') || 
+        error.message.includes('chrome') || 
+        error.message.includes('chromium')) {
+      
+      console.log('Puppeteer failed, redirecting to simple HTML preview');
+      
+      // Redirect to simple HTML preview
+      return res.redirect('/api/certificates/preview-simple');
+    }
+    
     res.status(500).json({ 
       error: 'Failed to generate preview certificate',
       details: error.message,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      suggestion: 'Try using the simple preview at /api/certificates/preview-simple'
     });
   }
 }

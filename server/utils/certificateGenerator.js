@@ -1,4 +1,4 @@
-const puppeteer = require('puppeteer');
+const puppeteer = require('puppeteer-core');
 const fs = require('fs');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
@@ -393,52 +393,42 @@ async function generateCertificate(recipient, config = {}) {
     // Detect serverless environment
     const isServerless = process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME;
     
-    // Configure Puppeteer for serverless environment
-    const puppeteerConfig = {
-      headless: 'new',
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-accelerated-2d-canvas',
-        '--no-first-run',
-        '--no-zygote',
-        '--single-process',
-        '--disable-gpu',
-        '--disable-web-security',
-        '--disable-features=VizDisplayCompositor'
-      ]
-    };
-
-    // Add serverless-specific configuration
+    let puppeteerConfig;
+    
     if (isServerless) {
-      puppeteerConfig.args.push(
-        '--disable-background-timer-throttling',
-        '--disable-backgrounding-occluded-windows',
-        '--disable-renderer-backgrounding',
-        '--disable-extensions',
-        '--disable-plugins',
-        '--disable-default-apps',
-        '--disable-hang-monitor',
-        '--disable-prompt-on-repost',
-        '--disable-sync',
-        '--disable-translate',
-        '--metrics-recording-only',
-        '--no-default-browser-check',
-        '--safebrowsing-disable-auto-update',
-        '--disable-background-networking'
-      );
-      
-      // Use system Chrome in Vercel if available
+      // Use chrome-aws-lambda for serverless environments
       try {
         const chromium = require('chrome-aws-lambda');
-        puppeteerConfig.executablePath = await chromium.executablePath;
-        puppeteerConfig.args = chromium.args;
-        puppeteerConfig.defaultViewport = chromium.defaultViewport;
-        puppeteerConfig.headless = chromium.headless;
+        
+        puppeteerConfig = {
+          args: chromium.args,
+          defaultViewport: chromium.defaultViewport,
+          executablePath: await chromium.executablePath,
+          headless: chromium.headless,
+          ignoreHTTPSErrors: true,
+        };
+        
+        console.log('Using chrome-aws-lambda for serverless environment');
       } catch (chromiumError) {
-        console.log('chrome-aws-lambda not available, using default Puppeteer');
+        console.error('chrome-aws-lambda failed:', chromiumError);
+        throw new Error('Serverless browser initialization failed');
       }
+    } else {
+      // Local development configuration
+      puppeteerConfig = {
+        headless: true,
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-accelerated-2d-canvas',
+          '--no-first-run',
+          '--no-zygote',
+          '--single-process',
+          '--disable-gpu'
+        ]
+      };
+      console.log('Using local Puppeteer configuration');
     }
 
     // Launch Puppeteer browser
