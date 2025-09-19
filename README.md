@@ -14,6 +14,8 @@ A modern web application for generating and sending certificates in bulk. Upload
 - 🔍 **Live Preview**: Preview certificates before generation
 - ✅ **Email Validation**: Test email configuration before sending
 - 📱 **Responsive Design**: Works on desktop and mobile devices
+- 🚀 **Brevo SMTP**: Built-in support for Brevo (Sendinblue) SMTP
+- 🔒 **Secure**: Environment-based configuration for API keys
 
 ## Screenshots
 
@@ -88,11 +90,24 @@ A modern web application for generating and sending certificates in bulk. Upload
 
 ### Step 4: Configure Email
 
-1. Select your email service (Gmail recommended)
-2. Enter your email address
+**Option A: Brevo SMTP (Recommended for Production)**
+1. Sign up at [brevo.com](https://www.brevo.com)
+2. Verify your domain and sender email
+3. Generate SMTP API key
+4. Use the configuration:
+   - Provider: Brevo
+   - API Key: Your Brevo SMTP key
+   - From Email: Your verified sender email
+5. Test the configuration
+
+**Option B: Gmail SMTP**
+1. Select Gmail as your email service
+2. Enter your Gmail address
 3. Enter your app password (see Gmail setup below)
 4. Test the configuration
 5. Customize the email template (optional)
+
+📖 **Detailed Setup Guide:** See [BREVO_SETUP.md](BREVO_SETUP.md) for complete Brevo configuration instructions.
 
 ### Step 5: Generate and Send
 

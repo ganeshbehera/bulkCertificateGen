@@ -2,6 +2,22 @@ const nodemailer = require('nodemailer');
 const fs = require('fs');
 const path = require('path');
 
+// Brevo SMTP configuration helper
+function createBrevoTransporter(apiKey, fromEmail) {
+  return nodemailer.createTransporter({
+    host: 'smtp-relay.brevo.com',
+    port: 587,
+    secure: false, // Use STARTTLS
+    auth: {
+      user: fromEmail, // Your verified sender email
+      pass: apiKey    // Your Brevo SMTP API key
+    },
+    tls: {
+      ciphers: 'SSLv3'
+    }
+  });
+}
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -14,20 +30,40 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Recipients array is required' });
     }
 
-    if (!emailConfig || !emailConfig.smtp) {
+    if (!emailConfig) {
       return res.status(400).json({ error: 'Email configuration is required' });
     }
 
-    // Create transporter
-    const transporter = nodemailer.createTransporter({
-      host: emailConfig.smtp.host,
-      port: emailConfig.smtp.port,
-      secure: emailConfig.smtp.secure,
-      auth: {
-        user: emailConfig.smtp.user,
-        pass: emailConfig.smtp.pass
+    let transporter;
+
+    // Check if using Brevo configuration
+    if (emailConfig.provider === 'brevo' && emailConfig.brevo) {
+      if (!emailConfig.brevo.apiKey || !emailConfig.brevo.fromEmail) {
+        return res.status(400).json({ 
+          error: 'Brevo API key and from email are required' 
+        });
       }
-    });
+      
+      transporter = createBrevoTransporter(
+        emailConfig.brevo.apiKey, 
+        emailConfig.brevo.fromEmail
+      );
+    } else if (emailConfig.smtp) {
+      // Fallback to custom SMTP configuration
+      transporter = nodemailer.createTransporter({
+        host: emailConfig.smtp.host,
+        port: emailConfig.smtp.port,
+        secure: emailConfig.smtp.secure,
+        auth: {
+          user: emailConfig.smtp.user,
+          pass: emailConfig.smtp.pass
+        }
+      });
+    } else {
+      return res.status(400).json({ 
+        error: 'Either Brevo configuration or SMTP configuration is required' 
+      });
+    }
 
     // Verify connection
     await transporter.verify();
@@ -62,8 +98,12 @@ export default async function handler(req, res) {
         }
 
         // Send email
+        const fromEmail = emailConfig.provider === 'brevo' 
+          ? emailConfig.brevo.fromEmail 
+          : emailConfig.from;
+          
         const mailOptions = {
-          from: emailConfig.from,
+          from: fromEmail,
           to: recipient.email,
           subject: emailConfig.subject || 'Your Certificate of Completion',
           html: `
