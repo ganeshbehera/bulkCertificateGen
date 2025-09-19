@@ -500,5 +500,6 @@ async function generatePreviewCertificate(config = {}) {
 
 module.exports = {
   generateCertificate,
-  generatePreviewCertificate
+  generatePreviewCertificate,
+  generateCertificateHTML
 };
