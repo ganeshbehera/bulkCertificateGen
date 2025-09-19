@@ -432,8 +432,12 @@ async function generateCertificate(recipient, config = {}) {
       }
     });
     
-    // Ensure certificates directory exists
-    const certificatesDir = path.join(__dirname, '../certificates');
+    // Ensure certificates directory exists (serverless-friendly)
+    const isServerless = process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME;
+    const certificatesDir = isServerless 
+      ? path.join('/tmp', 'certificates')
+      : path.join(__dirname, '../certificates');
+      
     if (!fs.existsSync(certificatesDir)) {
       fs.mkdirSync(certificatesDir, { recursive: true });
     }
