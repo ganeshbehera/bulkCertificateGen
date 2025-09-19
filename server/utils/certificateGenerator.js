@@ -390,8 +390,11 @@ function generateCertificateHTML(recipient, config = {}) {
 async function generateCertificate(recipient, config = {}) {
   let browser;
   try {
-    // Launch Puppeteer browser
-    browser = await puppeteer.launch({
+    // Detect serverless environment
+    const isServerless = process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME;
+    
+    // Configure Puppeteer for serverless environment
+    const puppeteerConfig = {
       headless: 'new',
       args: [
         '--no-sandbox',
@@ -401,9 +404,45 @@ async function generateCertificate(recipient, config = {}) {
         '--no-first-run',
         '--no-zygote',
         '--single-process',
-        '--disable-gpu'
+        '--disable-gpu',
+        '--disable-web-security',
+        '--disable-features=VizDisplayCompositor'
       ]
-    });
+    };
+
+    // Add serverless-specific configuration
+    if (isServerless) {
+      puppeteerConfig.args.push(
+        '--disable-background-timer-throttling',
+        '--disable-backgrounding-occluded-windows',
+        '--disable-renderer-backgrounding',
+        '--disable-extensions',
+        '--disable-plugins',
+        '--disable-default-apps',
+        '--disable-hang-monitor',
+        '--disable-prompt-on-repost',
+        '--disable-sync',
+        '--disable-translate',
+        '--metrics-recording-only',
+        '--no-default-browser-check',
+        '--safebrowsing-disable-auto-update',
+        '--disable-background-networking'
+      );
+      
+      // Use system Chrome in Vercel if available
+      try {
+        const chromium = require('chrome-aws-lambda');
+        puppeteerConfig.executablePath = await chromium.executablePath;
+        puppeteerConfig.args = chromium.args;
+        puppeteerConfig.defaultViewport = chromium.defaultViewport;
+        puppeteerConfig.headless = chromium.headless;
+      } catch (chromiumError) {
+        console.log('chrome-aws-lambda not available, using default Puppeteer');
+      }
+    }
+
+    // Launch Puppeteer browser
+    browser = await puppeteer.launch(puppeteerConfig);
     
     const page = await browser.newPage();
     
