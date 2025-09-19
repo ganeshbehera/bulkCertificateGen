@@ -1,15 +1,4 @@
 {
   "buildCommand": "npm run vercel-build",
-  "outputDirectory": "client/build",
-  "functions": {
-    "server/index.js": {
-      "maxDuration": 30
-    }
-  },
-  "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "/server/index.js"
-    }
-  ]
+  "outputDirectory": "client/build"
 }
